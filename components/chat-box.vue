@@ -49,31 +49,14 @@
 </template>
 
 <script lang="ts" setup>
-const messages = ref<any>([{
-  role: 'ai',
-  content: 'Hello!'
-}]);
-const input = ref<string>('');
+import { useChat, type Message } from 'ai/vue';
 
-function isMessageFromUser(message: any) {
+const { messages, input, handleSubmit } = useChat({
+  headers: { 'Content-Type': 'application/json' },
+});
+
+function isMessageFromUser(message: Message) {
   return message.role === 'user';
-}
-
-function handleSubmit() {
-  if (input.value) {
-    messages.value = [
-      ...messages.value,
-      {
-        role: 'user',
-        content: input.value,
-      },
-      {
-        role: 'ai',
-        content: input.value,
-      },
-    ];
-    input.value = '';
-  }
 }
 </script>
 

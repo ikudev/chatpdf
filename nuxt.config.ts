@@ -7,4 +7,7 @@ export default defineNuxtConfig({
       plugins: [require('daisyui')],
     },
   },
+  runtimeConfig: {
+    openaiApiKey: '',
+  },
 });
