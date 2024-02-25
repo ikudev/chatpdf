@@ -10,13 +10,16 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@langchain/core": "^0.1.30",
+    "@langchain/community": "^0.0.32",
+    "@langchain/core": "^0.1.33",
     "@langchain/openai": "^0.0.14",
     "@prisma/client": "^5.10.2",
     "ai": "^2.2.35",
     "h3-formidable": "^1.0.0",
+    "langchain": "^0.1.21",
     "lodash": "^4.17.21",
     "nuxt": "^3.10.2",
+    "pdf-parse": "^1.1.1",
     "prisma": "^5.10.2",
     "vue": "^3.4.19",
     "vue-router": "^4.2.5"
