@@ -1,9 +1,7 @@
 import { LangChainStream, Message, StreamingTextResponse } from 'ai';
 import { ChatOpenAI } from '@langchain/openai';
-import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { PromptTemplate } from '@langchain/core/prompts';
 import _ from 'lodash';
-import { Callbacks } from 'langchain/callbacks';
 
 export default defineLazyEventHandler(() => {
   const apiKey = useRuntimeConfig().openaiApiKey;
