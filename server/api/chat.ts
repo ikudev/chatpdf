@@ -1,6 +1,9 @@
 import { LangChainStream, Message, StreamingTextResponse } from 'ai';
 import { ChatOpenAI } from '@langchain/openai';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
+import { PromptTemplate } from '@langchain/core/prompts';
+import _ from 'lodash';
+import { Callbacks } from 'langchain/callbacks';
 
 export default defineLazyEventHandler(() => {
   const apiKey = useRuntimeConfig().openaiApiKey;
@@ -16,17 +19,20 @@ export default defineLazyEventHandler(() => {
     const { messages } = await readBody(event);
 
     const { stream, handlers } = LangChainStream();
-    llm
-      .call(
-        (messages as Message[]).map((message) =>
-          message.role === 'user'
-            ? new HumanMessage(message.content)
-            : new AIMessage(message.content)
-        ),
-        {},
-        [handlers]
+
+    const standaloneQuestionTemplate = `Given a question, convert the question to a standalone question.
+      question: {question}
+      standalone question:`;
+    const standaloneQuestionPrompt = PromptTemplate.fromTemplate(
+      standaloneQuestionTemplate
+    );
+
+    standaloneQuestionPrompt
+      .pipe(llm)
+      .invoke(
+        { question: _.last<Message>(messages)?.content || '' },
+        { callbacks: [handlers] }
       )
-      // eslint-disable-next-line no-console
       .catch(console.error);
     return new StreamingTextResponse(stream);
   });
