@@ -33,21 +33,42 @@ export default defineLazyEventHandler(() => {
 
   return defineEventHandler(async (event) => {
     const { messages } = await readBody(event);
-
+    // standalone question prompt
     const standaloneQuestionTemplate = `Given a question, convert the question to a standalone question.
       question: {question}
       standalone question:`;
     const standaloneQuestionPrompt = PromptTemplate.fromTemplate(
       standaloneQuestionTemplate
     );
+    // answer prompt
+    const answerTemplate = `You are a helpful support assistant who can answer a given question based on the context provided.
+      Try to find the answer in the context.
+      If you can't find the answer, say "I'm sorry, I don't know the answer to that."
+      Don't try to make up an answer. Always speak as if you were chatting to a friend.
+      context: {context}
+      question: {question}
+      answer: `;
+    const answerPrompt = PromptTemplate.fromTemplate(answerTemplate);
+    // retrieval
     const retriever = vectorStore.asRetriever();
     const outputParser = new StringOutputParser();
-
+    // chain
+    let standaloneQuestion = '';
     const chain = standaloneQuestionPrompt
       .pipe(llm)
       .pipe(outputParser)
+      .pipe((qst) => {
+        standaloneQuestion = qst;
+        return qst;
+      })
       .pipe(retriever)
-      .pipe((docs) => docs.map((e) => e.pageContent).join('\n\n'));
+      .pipe((docs) => ({
+        question: standaloneQuestion,
+        context: docs.map((e) => e.pageContent).join('\n\n'),
+      }))
+      .pipe(answerPrompt)
+      .pipe(llm)
+      .pipe(outputParser);
     const stream = await chain.stream({
       question: _.last<Message>(messages)?.content || '',
     });
