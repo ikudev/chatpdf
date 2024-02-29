@@ -41,7 +41,8 @@ export default defineLazyEventHandler(() => {
     const outputParser = new StringOutputParser();
 
     // standalone question chain
-    const standaloneQuestionTemplate = `Given a question, convert the question to a standalone question.
+    const standaloneQuestionTemplate = `Given some conversation history (if any) and a question, convert the question to a standalone question.
+      conversation history: {conversation}
       question: {question}
       standalone question:`;
     const standaloneQuestionPrompt = PromptTemplate.fromTemplate(
@@ -60,10 +61,12 @@ export default defineLazyEventHandler(() => {
 
     // answering chain
     const answerTemplate = `You are a helpful support assistant who can answer a given question based on the context provided.
-      Try to find the answer in the context.
-      If you can't find the answer, say "I'm sorry, I don't know the answer to that."
+      At first, try to find the answer in the context.
+      If the answer is not given in the context, find the answer in the conversation history if possible.
+      If you really don't know the answer, say "I'm sorry, I don't know the answer to that."
       Don't try to make up an answer. Always speak as if you were chatting to a friend.
       context: {context}
+      conversation history: {conversation}
       question: {question}
       answer: `;
     const answerPrompt = PromptTemplate.fromTemplate(answerTemplate);
@@ -77,12 +80,16 @@ export default defineLazyEventHandler(() => {
       },
       {
         context: retrievalChain,
+        conversation: ({ originalInput }) => originalInput.conversation,
         question: ({ originalInput }) => originalInput.question,
       },
       answerChain,
     ]);
     const stream = await chain.stream({
       question: _.last<Message>(messages)?.content || '',
+      conversation: messages
+        .map((m: Message) => `${m.role}: ${m.content}`)
+        .join('\n\n'),
     });
     return new StreamingTextResponse(stream);
   });
